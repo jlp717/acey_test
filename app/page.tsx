@@ -236,11 +236,7 @@ function TennisCourtScene() {
       {/* Particle System */}
       <points ref={particlesRef}>
         <bufferGeometry>
-          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-          {/* @ts-ignore */}
           <bufferAttribute attach="attributes-position" count={particleCount} array={positions} itemSize={3} />
-          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-          {/* @ts-ignore */}
           <bufferAttribute attach="attributes-color" count={particleCount} array={colors} itemSize={3} />
         </bufferGeometry>
         <pointsMaterial size={0.1} vertexColors transparent opacity={0.6} />
