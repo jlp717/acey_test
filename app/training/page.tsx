@@ -431,7 +431,7 @@ export default function TechnicalTrainingPage() {
               }}
               onMouseDown={(e) => {
                 const handleMouseMove = (e: MouseEvent) => {
-                  const rect = (e.currentTarget as HTMLElement)?.parentElement?.getBoundingClientRect()
+                  const rect = e.currentTarget?.parentElement?.getBoundingClientRect()
                   if (rect) {
                     const centerX = rect.left + rect.width / 2
                     const centerY = rect.top + rect.height * 0.8
