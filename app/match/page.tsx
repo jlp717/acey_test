@@ -67,12 +67,13 @@ export default function LiveMatchPage() {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         await videoRef.current.play()
       }
       setCameraActive(true)
+      voice.start()
     } catch (err) {
       console.error('No se pudo acceder a la cámara', err)
     }

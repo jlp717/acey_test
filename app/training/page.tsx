@@ -5,7 +5,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { Line, Sphere } from "@react-three/drei"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, Play, Pause, RotateCcw, Target, Mic, MicOff } from "lucide-react"
+import { ArrowLeft, Play, Pause, RotateCcw, Target, Mic, MicOff, Camera } from "lucide-react"
 import Link from "next/link"
 import { useVoiceAgent } from '@/hooks/useVoiceAgent'
 import { statStore } from '@/lib/statStore'
@@ -220,7 +220,23 @@ export default function TechnicalTrainingPage() {
     kneeFlexion: { value: 28, ideal: 30, tolerance: 10 },
   })
 
-  const voice = useVoiceAgent(true)
+  const [cameraActive, setCameraActive] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const voice = useVoiceAgent(cameraActive)
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        await videoRef.current.play()
+      }
+      setCameraActive(true)
+      voice.start()
+    } catch (err) {
+      console.error('No se pudo acceder a la cámara', err)
+    }
+  }
 
   useEffect(() => {
     statStore.startPoint()
@@ -270,9 +286,26 @@ export default function TechnicalTrainingPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 relative overflow-hidden">
-      {/* Dark charcoal background with subtle texture */}
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-800">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,158,0.1),transparent_70%)]"></div>
+      {/* Camera feed background */}
+      <div className="absolute inset-0 z-0">
+        {cameraActive ? (
+          <video
+            ref={videoRef}
+            className="w-full h-full object-cover"
+            autoPlay
+            muted
+            playsInline
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-black">
+            <Button onClick={startCamera} className="bg-green-600 text-white">
+              <Camera className="w-5 h-5 mr-2" /> Activar cámara
+            </Button>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-800">
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,158,0.1),transparent_70%)]"></div>
+        </div>
       </div>
 
       {/* Back Button */}
@@ -284,60 +317,62 @@ export default function TechnicalTrainingPage() {
         </Link>
       </div>
 
-      {/* Left Stroke Menu */}
-      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-40 w-20">
-        <div className="holographic-menu backdrop-blur-xl border border-green-400/30 rounded-2xl p-4">
-          <div className="space-y-4">
-            {strokes.map((stroke) => (
-              <Button
-                key={stroke.id}
-                onClick={() => setSelectedStroke(stroke.id)}
-                className={`w-12 h-12 rounded-xl transition-all duration-300 ${
-                  selectedStroke === stroke.id
-                    ? "stroke-selected border-2 border-green-400 bg-green-400/20"
-                    : "stroke-inactive bg-gray-800/50 border border-gray-600/30"
-                }`}
-              >
-                <span className="text-xl">{stroke.icon}</span>
-              </Button>
-            ))}
-          </div>
+      {cameraActive && (
+        <>
+          {/* Left Stroke Menu */}
+          <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-40 w-20">
+            <div className="holographic-menu backdrop-blur-xl border border-green-400/30 rounded-2xl p-4">
+              <div className="space-y-4">
+                {strokes.map((stroke) => (
+                  <Button
+                    key={stroke.id}
+                    onClick={() => setSelectedStroke(stroke.id)}
+                    className={`w-12 h-12 rounded-xl transition-all duration-300 ${
+                      selectedStroke === stroke.id
+                        ? "stroke-selected border-2 border-green-400 bg-green-400/20"
+                        : "stroke-inactive bg-gray-800/50 border border-gray-600/30"
+                    }`}
+                  >
+                    <span className="text-xl">{stroke.icon}</span>
+                  </Button>
+                ))}
+              </div>
 
-          <div className="mt-6 pt-4 border-t border-gray-600/30">
-            <div className="text-xs text-gray-400 cyber-font text-center mb-2">CONTROLS</div>
-            <div className="space-y-2">
-              <Button onClick={() => setIsPlaying(!isPlaying)} className="w-12 h-8 rounded-lg cyber-control-button">
-                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              </Button>
-              <Button onClick={() => setCameraAngle(0)} className="w-12 h-8 rounded-lg cyber-control-button">
-                <RotateCcw className="w-4 h-4" />
-              </Button>
+              <div className="mt-6 pt-4 border-t border-gray-600/30">
+                <div className="text-xs text-gray-400 cyber-font text-center mb-2">CONTROLS</div>
+                <div className="space-y-2">
+                  <Button onClick={() => setIsPlaying(!isPlaying)} className="w-12 h-8 rounded-lg cyber-control-button">
+                    {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  </Button>
+                  <Button onClick={() => setCameraAngle(0)} className="w-12 h-8 rounded-lg cyber-control-button">
+                    <RotateCcw className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Central 3D Scene */}
-      <div className="absolute inset-0 z-10">
-        <Canvas camera={{ position: [3, 2, 3], fov: 60 }} gl={{ antialias: true, alpha: true }}>
-          <Suspense fallback={null}>
-            <TrainingScene selectedStroke={selectedStroke} cameraAngle={cameraAngle} userAccuracy={userAccuracy} />
-          </Suspense>
-        </Canvas>
-      </div>
-
-      {/* Right Critical Angles Panel */}
-      <div className="absolute right-6 top-1/2 transform -translate-y-1/2 z-40 w-64">
-        <Card className="critical-angles-panel backdrop-blur-xl border-0 overflow-hidden">
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-green-400/10 via-transparent to-green-400/5 p-[1px]">
-            <div className="w-full h-full bg-black/80 rounded-2xl"></div>
+          {/* Central 3D Scene */}
+          <div className="absolute inset-0 z-10">
+            <Canvas camera={{ position: [3, 2, 3], fov: 60 }} gl={{ antialias: true, alpha: true }}>
+              <Suspense fallback={null}>
+                <TrainingScene selectedStroke={selectedStroke} cameraAngle={cameraAngle} userAccuracy={userAccuracy} />
+              </Suspense>
+            </Canvas>
           </div>
 
-          <CardContent className="relative p-6">
-            <div className="flex items-center space-x-2 mb-6">
-              <Target className="w-5 h-5 text-green-400" />
-              <h3 className="text-lg font-bold cyber-font text-white">CRITICAL ANGLES</h3>
-            </div>
+          {/* Right Critical Angles Panel */}
+          <div className="absolute right-6 top-1/2 transform -translate-y-1/2 z-40 w-64">
+            <Card className="critical-angles-panel backdrop-blur-xl border-0 overflow-hidden">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-green-400/10 via-transparent to-green-400/5 p-[1px]">
+                <div className="w-full h-full bg-black/80 rounded-2xl"></div>
+              </div>
+
+              <CardContent className="relative p-6">
+                <div className="flex items-center space-x-2 mb-6">
+                  <Target className="w-5 h-5 text-green-400" />
+                  <h3 className="text-lg font-bold cyber-font text-white">CRITICAL ANGLES</h3>
+                </div>
 
             <div className="space-y-4">
               {Object.entries(criticalAngles).map(([key, angle]) => (
@@ -488,6 +523,8 @@ export default function TechnicalTrainingPage() {
           )}
         </Button>
       </div>
+        </>
+      )}
       <style jsx>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
         
