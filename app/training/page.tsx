@@ -5,7 +5,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { Line, Sphere } from "@react-three/drei"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, Play, Pause, RotateCcw, Target } from "lucide-react"
+import { ArrowLeft, Play, Pause, RotateCcw, Target, Mic, MicOff } from "lucide-react"
 import Link from "next/link"
 import { useVoiceAgent } from '@/hooks/useVoiceAgent'
 import { statStore } from '@/lib/statStore'
@@ -470,6 +470,22 @@ export default function TechnicalTrainingPage() {
 
       <div className="fixed bottom-4 right-4 bg-black/60 text-green-400 p-2 rounded text-xs">
         {voice.listening ? "Agente activo" : "Agente inactivo"}
+      </div>
+      {/* Microphone Button */}
+      <div className="absolute bottom-20 right-8 z-40">
+        <Button
+          onClick={voice.toggleMute}
+          className={`w-14 h-14 rounded-full emerald-mic-button ${voice.muted ? "" : "listening"}`}
+        >
+          {voice.muted ? (
+            <MicOff className="w-6 h-6 text-white" />
+          ) : (
+            <Mic className="w-6 h-6 text-white" />
+          )}
+          {!voice.muted && (
+            <div className="absolute inset-0 rounded-full border-2 border-green-400 animate-ping"></div>
+          )}
+        </Button>
       </div>
       <style jsx>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');

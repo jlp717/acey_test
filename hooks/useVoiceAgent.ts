@@ -10,12 +10,17 @@ interface Message {
 
 export function useVoiceAgent(active: boolean) {
   const [listening, setListening] = useState(false)
+  const [muted, setMuted] = useState(false)
   const recognitionRef = useRef<any>(null)
   const synthRef = useRef<SpeechSynthesis | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
 
   useEffect(() => {
-    if (!active) return
+    if (!active || muted) {
+      if (recognitionRef.current) recognitionRef.current.stop()
+      setListening(false)
+      return
+    }
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRecognition) return
@@ -38,11 +43,23 @@ export function useVoiceAgent(active: boolean) {
       recognition.stop()
       setListening(false)
     }
-  }, [active])
+  }, [active, muted])
 
   async function handleQuery(text: string) {
-    const cleaned = text.trim()
+    const cleaned = text.trim().toLowerCase()
     if (!cleaned) return
+
+    if (cleaned.includes('silenciar')) {
+      setMuted(true)
+      speak('Micrófono silenciado')
+      return
+    }
+
+    if (cleaned.includes('activar')) {
+      setMuted(false)
+      speak('Micrófono activado')
+      return
+    }
     setMessages((prev) => [...prev, { role: 'user', content: cleaned }])
     const answer = await getAnswer(cleaned)
     setMessages((prev) => [...prev, { role: 'assistant', content: answer }])
@@ -87,7 +104,8 @@ export function useVoiceAgent(active: boolean) {
       return 'Error al contactar el modelo.'
     }
   }
+  const toggleMute = () => setMuted((m) => !m)
 
-  return { listening, messages }
+  return { listening, messages, muted, toggleMute }
 }
 

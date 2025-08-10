@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Mic, ArrowLeft, Volume2, Camera, Wifi, ChevronRight, Play } from "lucide-react"
+import { Mic, MicOff, ArrowLeft, Volume2, Camera, Wifi, ChevronRight, Play } from "lucide-react"
 import Link from "next/link"
 import { useVoiceAgent } from '@/hooks/useVoiceAgent'
 import { statStore } from '@/lib/statStore'
@@ -47,7 +47,6 @@ export default function LiveMatchPage() {
   ])
   const [currentSet, setCurrentSet] = useState(0)
   const [server, setServer] = useState<"lucia" | "alex">("lucia")
-  const [isListening, setIsListening] = useState(false)
   const [swings, setSwings] = useState<SwingData[]>([])
   const [points, setPoints] = useState<PointData[]>([])
   const [currentGame, setCurrentGame] = useState(1)
@@ -66,13 +65,18 @@ export default function LiveMatchPage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const voice = useVoiceAgent(cameraActive)
 
-  // Simulate camera activation
-  useEffect(() => {
-    const timer = setTimeout(() => {
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        await videoRef.current.play()
+      }
       setCameraActive(true)
-    }, 3000)
-    return () => clearTimeout(timer)
-  }, [])
+    } catch (err) {
+      console.error('No se pudo acceder a la cámara', err)
+    }
+  }
 
   // Simulate serve detection
   useEffect(() => {
@@ -180,10 +184,6 @@ export default function LiveMatchPage() {
     return score >= 3 ? scoreMap[3] : scoreMap[score]
   }
 
-  const handleMicToggle = () => {
-    setIsListening(!isListening)
-  }
-
   const handleSettingsToggle = (setting: keyof typeof settings) => {
     setSettings((prev) => ({
       ...prev,
@@ -239,10 +239,9 @@ export default function LiveMatchPage() {
           </video>
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-16 h-16 border-4 border-green-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-green-400 text-xl cyber-font">Activating camera...</p>
-            </div>
+            <Button onClick={startCamera} className="bg-green-600 text-white">
+              <Camera className="w-5 h-5 mr-2" /> Activar cámara
+            </Button>
           </div>
         )}
 
@@ -450,11 +449,17 @@ export default function LiveMatchPage() {
       {/* Microphone Button */}
       <div className="absolute bottom-8 right-8 z-40">
         <Button
-          onClick={handleMicToggle}
-          className={`w-14 h-14 rounded-full emerald-mic-button ${isListening ? "listening" : ""}`}
+          onClick={voice.toggleMute}
+          className={`w-14 h-14 rounded-full emerald-mic-button ${voice.muted ? "" : "listening"}`}
         >
-          <Mic className="w-6 h-6 text-white" />
-          {isListening && <div className="absolute inset-0 rounded-full border-2 border-green-400 animate-ping"></div>}
+          {voice.muted ? (
+            <MicOff className="w-6 h-6 text-white" />
+          ) : (
+            <Mic className="w-6 h-6 text-white" />
+          )}
+          {!voice.muted && (
+            <div className="absolute inset-0 rounded-full border-2 border-green-400 animate-ping"></div>
+          )}
         </Button>
       </div>
 
