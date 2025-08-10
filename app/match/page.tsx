@@ -7,6 +7,7 @@ import { Mic, MicOff, ArrowLeft, Volume2, Camera, Wifi, ChevronRight, Play } fro
 import Link from "next/link"
 import { useVoiceAgent } from '@/hooks/useVoiceAgent'
 import { statStore } from '@/lib/statStore'
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface SwingData {
   id: number
@@ -38,6 +39,7 @@ interface SetScore {
 
 export default function LiveMatchPage() {
   const [cameraActive, setCameraActive] = useState(false)
+  const [cameraError, setCameraError] = useState<string | null>(null)
   const [score, setScore] = useState({ lucia: 0, alex: 0 })
   const [gameScore, setGameScore] = useState<GameScore>({ lucia: "0", alex: "0" })
   const [sets, setSets] = useState<SetScore[]>([
@@ -67,6 +69,7 @@ export default function LiveMatchPage() {
 
   const startCamera = async () => {
     try {
+      setCameraError(null)
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       if (videoRef.current) {
         videoRef.current.srcObject = stream
@@ -74,6 +77,8 @@ export default function LiveMatchPage() {
       }
       setCameraActive(true)
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      setCameraError(message)
       console.error('No se pudo acceder a la cámara', err)
     }
   }
@@ -220,6 +225,16 @@ export default function LiveMatchPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-black">
+      {cameraError && (
+        <div className="absolute top-4 right-4 z-50 max-w-md">
+          <Alert variant="destructive">
+            <AlertTitle>Error de cámara</AlertTitle>
+            <AlertDescription>
+              {cameraError}. Se requiere permiso, un contexto seguro (https/localhost) y un dispositivo con cámara para que funcione.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
       {/* Full-screen Video Background */}
       <div className="absolute inset-0 z-0">
         {cameraActive ? (
