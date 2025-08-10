@@ -60,7 +60,6 @@ export function useVoiceAgent(active: boolean) {
       speak('Micrófono activado')
       return
     }
-
     setMessages((prev) => [...prev, { role: 'user', content: cleaned }])
     const answer = await getAnswer(cleaned)
     setMessages((prev) => [...prev, { role: 'assistant', content: answer }])
@@ -105,7 +104,6 @@ export function useVoiceAgent(active: boolean) {
       return 'Error al contactar el modelo.'
     }
   }
-
   const toggleMute = () => setMuted((m) => !m)
 
   return { listening, messages, muted, toggleMute }

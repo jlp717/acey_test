@@ -8,7 +8,6 @@ export async function POST(req: NextRequest) {
     .map((m: any) => `${m.role}: ${m.content}`)
     .join('\n')
   const inputs = `${historyText}\nuser: ${prompt}\nassistant:`
-
   const response = await fetch(
     'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1',
     {
@@ -42,4 +41,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ answer })
 }
-
