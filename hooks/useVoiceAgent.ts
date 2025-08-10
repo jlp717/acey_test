@@ -16,7 +16,9 @@ export function useVoiceAgent(active: boolean) {
   const [messages, setMessages] = useState<Message[]>([])
 
   useEffect(() => {
-    if (!active && recognitionRef.current) {
+    if (active) {
+      start()
+    } else if (recognitionRef.current) {
       recognitionRef.current.stop()
       setListening(false)
     }
@@ -43,7 +45,6 @@ export function useVoiceAgent(active: boolean) {
   }
 
   function start() {
-    if (!active) return
     initRecognition()
     try {
       recognitionRef.current?.start()

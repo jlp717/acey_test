@@ -73,7 +73,6 @@ export default function LiveMatchPage() {
         await videoRef.current.play()
       }
       setCameraActive(true)
-      voice.start()
     } catch (err) {
       console.error('No se pudo acceder a la cámara', err)
     }
