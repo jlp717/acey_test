@@ -16,15 +16,17 @@ export function useVoiceAgent(active: boolean) {
   const [messages, setMessages] = useState<Message[]>([])
 
   useEffect(() => {
-    if (!active) {
-      if (recognitionRef.current) recognitionRef.current.stop()
+    if (!active && recognitionRef.current) {
+      recognitionRef.current.stop()
       setListening(false)
-      return
     }
+  }, [active])
+
+  function initRecognition() {
+    if (recognitionRef.current) return
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRecognition) return
-
     const recognition = new SpeechRecognition()
     recognition.lang = 'es-ES'
     recognition.continuous = true
@@ -35,15 +37,21 @@ export function useVoiceAgent(active: boolean) {
         .join('')
       handleQuery(text)
     }
-    recognition.start()
+    recognition.onend = () => setListening(false)
     recognitionRef.current = recognition
-    setListening(true)
     synthRef.current = window.speechSynthesis
-    return () => {
-      recognition.stop()
-      setListening(false)
+  }
+
+  function start() {
+    if (!active) return
+    initRecognition()
+    try {
+      recognitionRef.current?.start()
+      setListening(true)
+    } catch (err) {
+      console.error('No se pudo iniciar el reconocimiento', err)
     }
-  }, [active])
+  }
 
   async function handleQuery(text: string) {
     const cleaned = text.trim().toLowerCase()
@@ -106,6 +114,6 @@ export function useVoiceAgent(active: boolean) {
 
   const toggleMute = () => setMuted((m) => !m)
 
-  return { listening, messages, muted, toggleMute }
+  return { listening, messages, muted, toggleMute, start }
 }
 
