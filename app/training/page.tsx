@@ -471,6 +471,7 @@ export default function TechnicalTrainingPage() {
       <div className="fixed bottom-4 right-4 bg-black/60 text-green-400 p-2 rounded text-xs">
         {voice.listening ? "Agente activo" : "Agente inactivo"}
       </div>
+
       {/* Microphone Button */}
       <div className="absolute bottom-20 right-8 z-40">
         <Button

@@ -16,7 +16,7 @@ export function useVoiceAgent(active: boolean) {
   const [messages, setMessages] = useState<Message[]>([])
 
   useEffect(() => {
-    if (!active || muted) {
+    if (!active) {
       if (recognitionRef.current) recognitionRef.current.stop()
       setListening(false)
       return
@@ -43,25 +43,23 @@ export function useVoiceAgent(active: boolean) {
       recognition.stop()
       setListening(false)
     }
-  }, [active, muted])
+  }, [active])
 
   async function handleQuery(text: string) {
     const cleaned = text.trim().toLowerCase()
     if (!cleaned) return
-
-    if (cleaned.includes('silenciar')) {
-      setMuted(true)
-      speak('Micrófono silenciado')
-      return
-    }
-
+    
     if (cleaned.includes('activar')) {
       setMuted(false)
       speak('Micrófono activado')
       return
     }
-    setMessages((prev) => [...prev, { role: 'user', content: cleaned }])
-    const answer = await getAnswer(cleaned)
+
+    if (muted) return
+
+    const history = [...messages, { role: 'user', content: cleaned }]
+    setMessages(history)
+    const answer = await getAnswer(cleaned, history)
     setMessages((prev) => [...prev, { role: 'assistant', content: answer }])
     speak(answer)
   }
@@ -73,7 +71,7 @@ export function useVoiceAgent(active: boolean) {
     synthRef.current.speak(utter)
   }
 
-  async function getAnswer(text: string): Promise<string> {
+  async function getAnswer(text: string, history: Message[]): Promise<string> {
     if (/duraci[oó]n.*punto/i.test(text)) {
       const durations = statStore.points.map(
         (p) => ((p.end ?? Date.now()) - p.start) / 1000
@@ -96,14 +94,16 @@ export function useVoiceAgent(active: boolean) {
       const res = await fetch('/api/voice-agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: text, history: messages })
+        body: JSON.stringify({ prompt: text, history })
       })
+      if (!res.ok) return 'Error al contactar el modelo.'
       const data = await res.json()
       return data.answer
     } catch (e) {
       return 'Error al contactar el modelo.'
     }
   }
+
   const toggleMute = () => setMuted((m) => !m)
 
   return { listening, messages, muted, toggleMute }
