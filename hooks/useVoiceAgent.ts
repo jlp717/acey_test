@@ -48,7 +48,7 @@ export function useVoiceAgent(active: boolean) {
   async function handleQuery(text: string) {
     const cleaned = text.trim().toLowerCase()
     if (!cleaned) return
-
+    
     if (cleaned.includes('activar')) {
       setMuted(false)
       speak('Micrófono activado')
@@ -56,12 +56,6 @@ export function useVoiceAgent(active: boolean) {
     }
 
     if (muted) return
-
-    if (cleaned.includes('silenciar')) {
-      setMuted(true)
-      speak('Micrófono silenciado')
-      return
-    }
 
     const history = [...messages, { role: 'user', content: cleaned }]
     setMessages(history)
