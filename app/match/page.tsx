@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Mic, ArrowLeft, Volume2, Camera, Wifi, ChevronRight, Play } from "lucide-react"
 import Link from "next/link"
+import { useVoiceAgent } from '@/hooks/useVoiceAgent'
+import { statStore } from '@/lib/statStore'
 
 interface SwingData {
   id: number
@@ -62,6 +64,7 @@ export default function LiveMatchPage() {
   })
 
   const videoRef = useRef<HTMLVideoElement>(null)
+  const voice = useVoiceAgent(cameraActive)
 
   // Simulate camera activation
   useEffect(() => {
@@ -77,6 +80,7 @@ export default function LiveMatchPage() {
 
     const interval = setInterval(() => {
       if (Math.random() > 0.85) {
+        statStore.startPoint()
         const isServe = Math.random() > 0.6
         const speed = isServe ? Math.floor(Math.random() * 80) + 120 : Math.floor(Math.random() * 50) + 80
         const serveType = isServe ? (Math.random() > 0.7 ? "second-serve" : "first-serve") : "stroke"
@@ -91,6 +95,8 @@ export default function LiveMatchPage() {
           player: server,
         }
         setSwings((prev) => [...prev, newSwing])
+        if (isServe) statStore.recordServe(speed)
+        statStore.recordTrajectory([{ x: newSwing.x, y: newSwing.y, time: Date.now() }])
 
         // Remove swing after 3 seconds
         setTimeout(() => {
@@ -117,7 +123,10 @@ export default function LiveMatchPage() {
 
             // Update score
             updateScore(winner)
+            statStore.endPoint()
           }, 1500)
+        } else {
+          setTimeout(() => statStore.endPoint(), 1500)
         }
       }
     }, 4000)
@@ -543,6 +552,9 @@ export default function LiveMatchPage() {
         </div>
       )}
 
+      <div className="fixed bottom-4 right-4 bg-black/60 text-green-400 p-2 rounded text-xs">
+        {voice.listening ? "Agente activo" : "Agente inactivo"}
+      </div>
       <style jsx>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
         

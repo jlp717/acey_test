@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowLeft, Play, Pause, RotateCcw, Target } from "lucide-react"
 import Link from "next/link"
+import { useVoiceAgent } from '@/hooks/useVoiceAgent'
+import { statStore } from '@/lib/statStore'
 import type * as THREE from "three"
 
 // 3D Skeleton Joint positions (simplified tennis pose)
@@ -217,6 +219,13 @@ export default function TechnicalTrainingPage() {
     hipRotation: { value: 32, ideal: 35, tolerance: 15 },
     kneeFlexion: { value: 28, ideal: 30, tolerance: 10 },
   })
+
+  const voice = useVoiceAgent(true)
+
+  useEffect(() => {
+    statStore.startPoint()
+    return () => statStore.endPoint()
+  }, [])
 
   const strokes = [
     { id: "forehand", name: "Forehand", icon: "🎾" },
@@ -459,6 +468,9 @@ export default function TechnicalTrainingPage() {
         </div>
       </div>
 
+      <div className="fixed bottom-4 right-4 bg-black/60 text-green-400 p-2 rounded text-xs">
+        {voice.listening ? "Agente activo" : "Agente inactivo"}
+      </div>
       <style jsx>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
         
