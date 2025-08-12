@@ -73,7 +73,9 @@ export default function LiveMatchPage() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       if (videoRef.current) {
         videoRef.current.srcObject = stream
-        await videoRef.current.play()
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch((err) => console.error('play failed', err))
+        }
       }
       setCameraActive(true)
     } catch (err) {
@@ -243,15 +245,12 @@ export default function LiveMatchPage() {
             className="w-full h-full object-cover"
             autoPlay
             muted
-            loop
             playsInline
             style={{
               filter: "contrast(1.1) saturate(1.2) hue-rotate(5deg)",
               aspectRatio: "16/9",
             }}
-          >
-            <div className="w-full h-full bg-gradient-to-br from-green-900/20 to-green-700/30"></div>
-          </video>
+          />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
             <Button onClick={startCamera} className="bg-green-600 text-white">
@@ -262,7 +261,7 @@ export default function LiveMatchPage() {
 
         {/* Video overlay for court enhancement */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 pointer-events-none"
           style={{
             background: "linear-gradient(135deg, rgba(0, 50, 0, 0.1) 0%, rgba(0, 100, 50, 0.05) 100%)",
             mixBlendMode: "overlay",

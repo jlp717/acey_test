@@ -105,9 +105,13 @@ export function useVoiceAgent(active: boolean) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: text, history })
       })
-      if (!res.ok) return 'Error al contactar el modelo.'
-      const data = await res.json()
-      return data.answer
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        return typeof data.answer === 'string'
+          ? data.answer
+          : 'Error al contactar el modelo.'
+      }
+      return data.answer ?? 'Respuesta vacía del modelo.'
     } catch (e) {
       return 'Error al contactar el modelo.'
     }

@@ -30,14 +30,15 @@ export async function POST(req: NextRequest) {
       }
     )
 
+    const data = await response.json().catch(() => ({}))
+
     if (!response.ok) {
+      const error = data?.error || 'Error al contactar el modelo.'
       return NextResponse.json(
-        { answer: 'Error al contactar el modelo.' },
+        { answer: error },
         { status: response.status }
       )
     }
-
-    const data = await response.json()
     let answer = 'Lo siento, no tengo una respuesta.'
     if (Array.isArray(data) && data[0]?.generated_text) {
       answer = data[0].generated_text
