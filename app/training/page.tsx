@@ -6,6 +6,7 @@ import { Line, Sphere } from "@react-three/drei"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowLeft, Play, Pause, RotateCcw, Target, Mic, MicOff, Camera } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link"
 import { useVoiceAgent } from '@/hooks/useVoiceAgent'
 import { statStore } from '@/lib/statStore'
@@ -221,18 +222,30 @@ export default function TechnicalTrainingPage() {
   })
 
   const [cameraActive, setCameraActive] = useState(false)
+  const [cameraError, setCameraError] = useState<string | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const voice = useVoiceAgent(cameraActive)
 
   const startCamera = async () => {
     try {
+      setCameraError(null)
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCameraError('La API de cámara no está disponible en este navegador')
+        return
+      }
+      if (typeof window !== 'undefined' && !window.isSecureContext) {
+        setCameraError('La cámara requiere un contexto seguro (https/localhost)')
+        return
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       if (videoRef.current) {
         videoRef.current.srcObject = stream
-        await videoRef.current.play()
+        await videoRef.current.play().catch((err) => console.error('play failed', err))
       }
       setCameraActive(true)
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      setCameraError(message)
       console.error('No se pudo acceder a la cámara', err)
     }
   }
@@ -285,6 +298,16 @@ export default function TechnicalTrainingPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 relative overflow-hidden">
+      {cameraError && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+          <Alert variant="destructive">
+            <AlertTitle>Error de cámara</AlertTitle>
+            <AlertDescription>
+              {cameraError}. Se requiere permiso, un contexto seguro (https/localhost) y un dispositivo con cámara para que funcione.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
       {/* Camera feed background */}
       <div className="absolute inset-0 z-0">
         {cameraActive ? (
