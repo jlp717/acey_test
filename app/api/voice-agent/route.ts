@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function POST(req: NextRequest) {
   const { prompt, history = [] } = await req.json()
   const hfKey = process.env.HF_API_KEY
+  const hfModel = process.env.HF_MODEL ?? 'mistralai/Mistral-7B-Instruct-v0.1'
 
   const historyText = history
     .map((m: any) => `${m.role}: ${m.content}`)
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const response = await fetch(
-      'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1',
+      `https://api-inference.huggingface.co/models/${hfModel}`,
       {
         method: 'POST',
         headers: {

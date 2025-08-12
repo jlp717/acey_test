@@ -70,6 +70,14 @@ export default function LiveMatchPage() {
   const startCamera = async () => {
     try {
       setCameraError(null)
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCameraError('La API de cámara no está disponible en este navegador')
+        return
+      }
+      if (typeof window !== 'undefined' && !window.isSecureContext) {
+        setCameraError('La cámara requiere un contexto seguro (https/localhost)')
+        return
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       if (videoRef.current) {
         videoRef.current.srcObject = stream
